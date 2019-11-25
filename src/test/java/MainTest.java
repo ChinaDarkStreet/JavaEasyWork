@@ -12,9 +12,9 @@ public class MainTest {
 
 
         Thread.sleep(10000);
-
-        WinUtil.sendNotification("title2222222", "text", "classpath:images/ic_launcher_round.png");
-        Thread.sleep(10000);
+        //
+        //WinUtil.sendNotification("title2222222", "text", "classpath:images/ic_launcher_round.png");
+        //Thread.sleep(10000);
 
     }
 

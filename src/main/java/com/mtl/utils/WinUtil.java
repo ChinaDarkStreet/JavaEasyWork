@@ -25,7 +25,7 @@ public class WinUtil {
             public void run() {
                 try {
                 SystemTray mainTray = SystemTray.getSystemTray();
-                Image trayIconImage = ImageIO.read(new File(pathToIcon));
+                Image trayIconImage = ImageIO.read(WinUtil.class.getResourceAsStream("/ic.png"));
 
                 TrayIcon mainTrayIcon = new TrayIcon(trayIconImage);
                 mainTrayIcon.setImageAutoSize(true);

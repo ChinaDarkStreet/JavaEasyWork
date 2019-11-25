@@ -161,7 +161,7 @@ public class MyDisplay implements ActionListener {
                     int curTime = getCurTime();
                     if (curTime >= nextTime) {
                         // 发送通知
-                        WinUtil.sendNotification("attention", String.format("next: %02d m\n %s", dt, toHHMM(nextTime)), "");
+                        WinUtil.sendNotification("attention", String.format("next: \n%02d m\n %s", dt, toHHMM(nextTime)), "");
                         // 更新nextTime,dt的值
                         updateNextTime();
                         MyDisplay.this.nextTime.setText(toHHMM(nextTime) + "    ");
