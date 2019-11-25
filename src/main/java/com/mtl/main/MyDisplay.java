@@ -12,15 +12,13 @@ import java.util.Calendar;
 /**
  * Created by MTL on 2019/11/23
  */
-public class MyDisplay implements ActionListener {
+public class MyDisplay {
     private JFrame frame = new JFrame("EasyWork");
-    private JToggleButton switchButton;
     private MyService myService;
     private JLabel durTime;
     private JLabel nextTime;
     private int mouseAtX;
     private int mouseAtY;
-    private String imagePath = "C:\\Users\\MTL\\Pictures\\Camera Roll/ic.png";
 
     public void display() {
 
@@ -29,26 +27,26 @@ public class MyDisplay implements ActionListener {
         Container contentPane = frame.getContentPane();
         JPanel main = new JPanel();
 
-        durTime = new JLabel("   40 m   ");
-        nextTime = new JLabel("16:23:00    ");
-        switchButton = new JToggleButton("未运行", false);
-        switchButton.setActionCommand("切换");
-        switchButton.addActionListener(this);
+        durTime = new JLabel("40 m   ");
+        nextTime = new JLabel("16:23");
 
         main.add(durTime);
         main.add(nextTime);
-        main.add(switchButton);
 
         contentPane.add(main);
         myService = new MyService();
         myService.initNextTime();
 
         frame.setVisible(true);
+
+        if (myService.initNextTime()) {
+            new Thread(myService).start();
+        }
     }
 
     private void initFrame() {
 
-        frame.setSize(190, 35);
+        frame.setSize(100, 28);
         frame.setResizable(true);
         frame.setAlwaysOnTop(true);
         frame.setUndecorated(true);
@@ -70,6 +68,7 @@ public class MyDisplay implements ActionListener {
             }
         });
 
+        // 初始化托盘图标
         tray();
     }
 
@@ -77,7 +76,7 @@ public class MyDisplay implements ActionListener {
         TrayIcon icon =
                 null;
         try {
-            icon = new TrayIcon(ImageIO.read(new File(imagePath)));
+            icon = new TrayIcon(WinUtil.imageIcon);
             icon.setImageAutoSize(true);
 
             //创建弹出菜单
@@ -112,26 +111,6 @@ public class MyDisplay implements ActionListener {
         }
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        switch (e.getActionCommand()) {
-            case "切换":
-                if (switchButton.getText().equals("未运行")) {
-                    if (myService.initNextTime()) {
-                        new Thread(myService).start();
-                        switchButton.setText("运行中");
-                    }
-                } else {
-                    switchButton.setText("未运行");
-                    myService.stop();
-                }
-                break;
-            default:
-                break;
-        }
-
-    }
-
     public class MyService implements Runnable {
 
         private String msStr = "07:20,08:00,08:10,08:50,09:00,09:45,09:55,10:40,10:50,11:35,13:30,14:10,14:20,15:00,15:10,15:50,16:00,16:40,16:50,17:30,17:50,18:30,18:40,19:20,19:30,20:10,20:20,21:00,21:20,22:00";
@@ -141,7 +120,7 @@ public class MyDisplay implements ActionListener {
         private int nextIndex = 0;
         private int dt = 0;
 
-        public MyService() {
+        MyService() {
             String[] mss = msStr.split(",");
             ms = new int[mss.length];
             for (int i = 0; i < mss.length; i++) {
@@ -164,10 +143,9 @@ public class MyDisplay implements ActionListener {
                         WinUtil.sendNotification("attention", String.format("next: \n%02d m\n %s", dt, toHHMM(nextTime)), "");
                         // 更新nextTime,dt的值
                         updateNextTime();
-                        MyDisplay.this.nextTime.setText(toHHMM(nextTime) + "    ");
-                        MyDisplay.this.durTime.setText(String.format("   %02d m   ", dt));
+                        MyDisplay.this.nextTime.setText(toHHMM(nextTime));
                     }
-
+                    setDurTime(toMMSS(nextTime * 60 - getCurTimeSecond()));
                     MyDisplay.this.frame.repaint();
                     //System.out.println(getCurTimeStr());
 
@@ -179,6 +157,10 @@ public class MyDisplay implements ActionListener {
                 }
 
             }
+        }
+
+        private String toMMSS(int time) {
+            return String.format("%02dm%02ds", time / 60, time % 60);
         }
 
         /**
@@ -195,13 +177,22 @@ public class MyDisplay implements ActionListener {
                     dt = time - curTime;
                     nextTime = time;
                     isRunning = true;
-
-                    MyDisplay.this.nextTime.setText(toHHMM(nextTime) + "    ");
-                    MyDisplay.this.durTime.setText(String.format("   %02d m   ", dt));
+                    setShow(nextTime, toMMSS(nextTime * 60 - getCurTimeSecond()));
                     return true;
                 }
             }
             return false;
+        }
+
+        private void setShow(int nextTime, String durTime) {
+
+            MyDisplay.this.nextTime.setText(toHHMM(nextTime));
+            setDurTime(durTime);
+        }
+
+        private void setDurTime(String durTime) {
+
+            MyDisplay.this.durTime.setText(String.format("%s   ", durTime));
         }
 
         private void updateNextTime() {
@@ -228,6 +219,14 @@ public class MyDisplay implements ActionListener {
             int hour = instance.get(Calendar.HOUR_OF_DAY);
             int minute = instance.get(Calendar.MINUTE);
             return hour * 60 + minute;
+        }
+
+        private int getCurTimeSecond() {
+            Calendar instance = Calendar.getInstance();
+            int hour = instance.get(Calendar.HOUR_OF_DAY);
+            int minute = instance.get(Calendar.MINUTE);
+            int second = instance.get(Calendar.SECOND);
+            return (hour * 60 + minute) * 60 + second;
         }
     }
 }
