@@ -15,7 +15,6 @@ import java.util.Calendar;
 public class MyDisplay implements ActionListener {
     private JFrame frame = new JFrame("EasyWork");
     private JToggleButton switchButton;
-    private JLabel curTime;
     private MyService myService;
     private JLabel durTime;
     private JLabel nextTime;
@@ -30,14 +29,12 @@ public class MyDisplay implements ActionListener {
         Container contentPane = frame.getContentPane();
         JPanel main = new JPanel();
 
-        curTime = new JLabel("16:23:00");
-        durTime = new JLabel("   40 分钟   ");
-        nextTime = new JLabel("16:23:00");
+        durTime = new JLabel("   40 m   ");
+        nextTime = new JLabel("16:23:00    ");
         switchButton = new JToggleButton("未运行", false);
         switchButton.setActionCommand("切换");
         switchButton.addActionListener(this);
 
-        main.add(curTime);
         main.add(durTime);
         main.add(nextTime);
         main.add(switchButton);
@@ -51,7 +48,7 @@ public class MyDisplay implements ActionListener {
 
     private void initFrame() {
 
-        frame.setSize(280, 35);
+        frame.setSize(190, 35);
         frame.setResizable(true);
         frame.setAlwaysOnTop(true);
         frame.setUndecorated(true);
@@ -164,14 +161,13 @@ public class MyDisplay implements ActionListener {
                     int curTime = getCurTime();
                     if (curTime >= nextTime) {
                         // 发送通知
-                        WinUtil.sendNotification("attention", String.format("next: %02d 分钟\n %s", dt, toHHMM(nextTime)), "");
+                        WinUtil.sendNotification("attention", String.format("next: %02d m\n %s", dt, toHHMM(nextTime)), "");
                         // 更新nextTime,dt的值
                         updateNextTime();
-                        MyDisplay.this.nextTime.setText(toHHMM(nextTime));
-                        MyDisplay.this.durTime.setText(String.format("   %02d 分钟   ", dt));
+                        MyDisplay.this.nextTime.setText(toHHMM(nextTime) + "    ");
+                        MyDisplay.this.durTime.setText(String.format("   %02d m   ", dt));
                     }
 
-                    MyDisplay.this.curTime.setText(getCurTimeStr());
                     MyDisplay.this.frame.repaint();
                     //System.out.println(getCurTimeStr());
 
@@ -200,22 +196,12 @@ public class MyDisplay implements ActionListener {
                     nextTime = time;
                     isRunning = true;
 
-                    MyDisplay.this.nextTime.setText(toHHMM(nextTime));
-                    MyDisplay.this.durTime.setText(String.format("   %02d 分钟   ", dt));
-                    MyDisplay.this.curTime.setText(getCurTimeStr());
+                    MyDisplay.this.nextTime.setText(toHHMM(nextTime) + "    ");
+                    MyDisplay.this.durTime.setText(String.format("   %02d m   ", dt));
                     return true;
                 }
             }
             return false;
-        }
-
-        private String getCurTimeStr() {
-            Calendar instance = Calendar.getInstance();
-            int hour = instance.get(Calendar.HOUR_OF_DAY);
-            int minute = instance.get(Calendar.MINUTE);
-            int second = instance.get(Calendar.SECOND);
-
-            return String.format("%02d:%02d:%02d", hour, minute, second);
         }
 
         private void updateNextTime() {
