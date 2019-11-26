@@ -2,11 +2,9 @@ package com.mtl.main;
 
 import com.mtl.utils.WinUtil;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
 import java.util.Calendar;
 
 /**
@@ -19,15 +17,23 @@ public class MyDisplay {
     private JLabel nextTime;
     private int mouseAtX;
     private int mouseAtY;
+    private JPanel main;
 
     public void display() {
 
         initFrame();
 
         Container contentPane = frame.getContentPane();
-        JPanel main = new JPanel();
+        main = new JPanel();
 
-        durTime = new JLabel("40 m   ");
+        durTime = new JLabel("40m00s   ");
+        durTime.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                super.mousePressed(e);
+                myService.haveARest(10);
+            }
+        });
         nextTime = new JLabel("16:23");
 
         main.add(durTime);
@@ -113,7 +119,7 @@ public class MyDisplay {
 
     public class MyService implements Runnable {
 
-        private String msStr = "07:20,08:00,08:10,08:50,09:00,09:45,09:55,10:40,10:50,11:35,13:30,14:10,14:20,15:00,15:10,15:50,16:00,16:40,16:50,17:30,17:50,18:30,18:40,19:20,19:30,20:10,20:20,21:00,21:20,22:00";
+        private String msStr = "07:20,08:00,08:10,08:50,09:00,09:45,09:55,10:40,10:50,11:35,11:45,12:30,12:40,13:20,13:30,14:10,14:20,15:00,15:10,15:50,16:00,16:40,16:50,17:30,17:50,18:30,18:40,19:20,19:30,20:10,20:20,21:00,21:20,22:00";
         private int[] ms;
         private boolean isRunning = false;
         private int nextTime = 0;
@@ -139,11 +145,10 @@ public class MyDisplay {
                 while (isRunning) {
                     int curTime = getCurTime();
                     if (curTime >= nextTime) {
+                        // 更新nextTime,dt的值
+                        initNextTime();
                         // 发送通知
                         WinUtil.sendNotification("attention", String.format("next: \n%02d m\n %s", dt, toHHMM(nextTime)), "");
-                        // 更新nextTime,dt的值
-                        updateNextTime();
-                        MyDisplay.this.nextTime.setText(toHHMM(nextTime));
                     }
                     setDurTime(toMMSS(nextTime * 60 - getCurTimeSecond()));
                     MyDisplay.this.frame.repaint();
@@ -173,7 +178,7 @@ public class MyDisplay {
             for (int i = 0; i < ms.length; i++) {
                 int time = ms[i];
                 if (curTime < time) {
-                    nextIndex = i;
+                    setIndex(i);
                     dt = time - curTime;
                     nextTime = time;
                     isRunning = true;
@@ -184,10 +189,21 @@ public class MyDisplay {
             return false;
         }
 
-        private void setShow(int nextTime, String durTime) {
+        private void setIndex(int i) {
+            nextIndex = i;
+            if (nextIndex % 2 == 1)
+                main.setBackground(Color.ORANGE);
+            else
+                main.setBackground(Color.WHITE);
+        }
 
-            MyDisplay.this.nextTime.setText(toHHMM(nextTime));
+        private void setShow(int nextTime, String durTime) {
+            setNextTimeShow(nextTime);
             setDurTime(durTime);
+        }
+
+        private void setNextTimeShow(int nextTime) {
+            MyDisplay.this.nextTime.setText(toHHMM(nextTime));
         }
 
         private void setDurTime(String durTime) {
@@ -196,12 +212,13 @@ public class MyDisplay {
         }
 
         private void updateNextTime() {
-            nextIndex++;
+            setIndex(nextIndex + 1);
             if (nextIndex == ms.length) {
                 stop();
             }
             nextTime = ms[nextIndex];
             dt = nextTime - getCurTime();
+            setNextTimeShow(nextTime);
         }
 
         private void stop() {
@@ -227,6 +244,17 @@ public class MyDisplay {
             int minute = instance.get(Calendar.MINUTE);
             int second = instance.get(Calendar.SECOND);
             return (hour * 60 + minute) * 60 + second;
+        }
+
+        public void haveARest(int minute) {
+            int i = getCurTime() + minute;
+            if (i > nextTime && nextIndex % 2 == 1){
+                updateNextTime();
+            }else {
+                nextTime = getCurTime() + minute;
+                setNextTimeShow(nextTime);
+                main.setBackground(Color.WHITE);
+            }
         }
     }
 }
