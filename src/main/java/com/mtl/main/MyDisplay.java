@@ -52,6 +52,8 @@ public class MyDisplay {
 
     private void initFrame() {
 
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        frame.setLocation((int) toolkit.getScreenSize().getWidth() - 100, (int) toolkit.getScreenSize().getHeight() - 250);
         frame.setSize(100, 28);
         frame.setResizable(true);
         frame.setAlwaysOnTop(true);
@@ -213,8 +215,9 @@ public class MyDisplay {
 
         private void updateNextTime() {
             setIndex(nextIndex + 1);
-            if (nextIndex == ms.length) {
+            if (nextIndex >= ms.length) {
                 stop();
+                return;
             }
             nextTime = ms[nextIndex];
             dt = nextTime - getCurTime();
@@ -246,11 +249,15 @@ public class MyDisplay {
             return (hour * 60 + minute) * 60 + second;
         }
 
-        public void haveARest(int minute) {
+        void haveARest(int minute) {
             int i = getCurTime() + minute;
-            if (i > nextTime && nextIndex % 2 == 1){
+            if (nextIndex % 2 == 1 && (i - minute > nextTime - 25)) { // 当前是40分钟状态
+                // 超过一半替换下一个休息时间
+                ms[nextIndex] = i - minute;
+                ms[nextIndex + 1] = i;
                 updateNextTime();
-            }else {
+                // 未超过一半使用不用替换
+            } else {
                 nextTime = getCurTime() + minute;
                 setNextTimeShow(nextTime);
                 main.setBackground(Color.WHITE);
